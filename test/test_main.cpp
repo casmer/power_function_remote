@@ -1,7 +1,5 @@
 #include <gmock/gmock.h>
 
-
-
 #if defined(ARDUINO)
 #include <Arduino.h>
 
