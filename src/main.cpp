@@ -32,25 +32,6 @@ void setup()
 }
 
 
-PowerFunctionsPwm speed_lookup[] = {
-    PowerFunctionsPwm::FLOAT,    // 0 - FLOAT
-    PowerFunctionsPwm::REVERSE7, // 7 - REVERSE1
-    PowerFunctionsPwm::REVERSE6, // 6 - REVERSE2
-    PowerFunctionsPwm::REVERSE5, // 5 - REVERSE3
-    PowerFunctionsPwm::REVERSE4, // 4 - REVERSE4
-    PowerFunctionsPwm::REVERSE3, // 3 - REVERSE5
-    PowerFunctionsPwm::REVERSE2, // 2 - REVERSE6
-    PowerFunctionsPwm::REVERSE1, // 1 - REVERSE7
-    PowerFunctionsPwm::BRAKE,    // 8 - BRAKE
-    PowerFunctionsPwm::FORWARD1, // 9 - FORWARD1
-    PowerFunctionsPwm::FORWARD2, // 10 - FORWARD2
-    PowerFunctionsPwm::FORWARD3, // 11 - FORWARD3
-    PowerFunctionsPwm::FORWARD4, // 12 - FORWARD4
-    PowerFunctionsPwm::FORWARD5, // 13 - FORWARD5
-    PowerFunctionsPwm::FORWARD6, // 14 - FORWARD6
-    PowerFunctionsPwm::FORWARD7  // 15 - FORWARD7
-};
-
 void PrintSpeed(int speed)
 {
   switch (static_cast<PowerFunctionsPwm>(speed))
