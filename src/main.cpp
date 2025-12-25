@@ -13,6 +13,10 @@ millisDelay printDelay;
 
 int analogXPin = A6; // Analog pin connected to a potentiometer
 int analogYPin = A7; // Analog pin connected to a potentiometer
+int invertJoystickXPin = A1; // Analog pin to read if X axis should be inverted
+int invertJoystickYPin = A2; // Analog pin to read if Y axis should be inverted
+bool invertJoystickX = false;
+bool invertJoystickY = false;
 int xValue = 0;      // Variable to store the read value
 int yValue = 0;      // Variable to store the read value
 
@@ -29,6 +33,8 @@ void setup()
 {
   printDelay.start(PRINT_DELAY_MS);
   Serial.begin(115200);
+  pinMode(invertJoystickXPin, INPUT_PULLUP);
+  pinMode(invertJoystickYPin, INPUT_PULLUP);
 }
 
 
@@ -100,11 +106,27 @@ void printValues()
     last_xValueScaled = xValueScaled;
     last_yValueScaled = yValueScaled;
 
-    Serial.print("X: ");
+    Serial.print("X");
+    if (invertJoystickX)
+    {
+      Serial.print("(inverted): ");
+    }
+    else
+    {
+      Serial.print(": ");
+    }
     Serial.print(xValue);
     Serial.print(" | Scaled X: ");
     Serial.print(xValueScaled);
-    Serial.print(" | Y: ");
+    Serial.print(" | Y");
+    if (invertJoystickY)
+    {
+      Serial.print("(inverted): ");
+    }
+    else
+    {
+      Serial.print(": ");
+    }
     Serial.print(yValue);
     Serial.print(" | Scaled Y: ");
     Serial.println(yValueScaled);
@@ -131,8 +153,18 @@ void printValues()
 void loop()
 {
 
+  invertJoystickX = digitalRead(invertJoystickXPin) == LOW;
+  invertJoystickY = digitalRead(invertJoystickYPin) == LOW;
   xValue = analogRead(analogXPin); // read the input pin
+  if (invertJoystickX)
+  {
+    xValue = 1023 - xValue;
+  }
   yValue = analogRead(analogYPin); // read the input pin
+  if (invertJoystickY)
+  {
+    yValue = 1023 - yValue;
+  }
   xValueScaled = scaleAnalogValue(xValue);
   yValueScaled = scaleAnalogValue(yValue);
   translateJoystickToSpeed(leftSpeed, rightSpeed, xValueScaled, yValueScaled);
