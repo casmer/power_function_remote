@@ -12,7 +12,7 @@
 #include "PowerFunctions.h"
 #include  <millisDelay.h>
 
-static constexpr unsigned long PRINT_DELAY_MS = 100;
+static constexpr unsigned long PRINT_DELAY_MS = 3000;
 
 millisDelay printDelay;
 
@@ -21,8 +21,11 @@ int analogYPin = A7; // Analog pin connected to a potentiometer
 int xValue = 0; // Variable to store the read value
 int yValue = 0; // Variable to store the read value
 
-PowerFunctionsPwm leftSpeed = PowerFunctionsPwm::BRAKE; // initial speed
-PowerFunctionsPwm rightSpeed = PowerFunctionsPwm::BRAKE; // initial speed
+int xValueScaled = 0; // Variable to store the scaled read value
+int yValueScaled = 0; // Variable to store the scaled read value
+
+int leftSpeed = 50; // initial speed
+int rightSpeed = 50; // initial speed
 
 // create a power functions instance
 PowerFunctions powerFunctions(12, 0); //Pin 12, Channel 0
@@ -110,14 +113,14 @@ void PrintSpeed(PowerFunctionsPwm speed)
   }
 }
 
-PowerFunctionsPwm analogToSpeed(int analogValue)
+PowerFunctionsPwm speedToPowerFunctionsPwm(int analogValue)
 {
   // deadzone
-  if (analogValue > 490 && analogValue < 530)
+  if (analogValue > 45 && analogValue < 55)
   {
     return PowerFunctionsPwm::BRAKE;
   }
-  int speed = map(analogValue, 0, 1023, 0, 16);
+  int speed = map(analogValue, -100, 100, 0, 16);
   if (speed >= 16)
   {
     speed = 15;
@@ -130,21 +133,48 @@ PowerFunctionsPwm analogToSpeed(int analogValue)
   return speed_lookup[speed];
 }
 
+
+int scaleAnalogValue(int analogValue)
+{
+  // deadzone
+  if (analogValue > 490 && analogValue < 530)
+  {
+    return 0;
+  }
+  int speed = map(analogValue, 0, 1023, -100, 100);
+  
+  return speed;
+}
+
 void printValues()
 {
-  if (printDelay.justFinished())
+  static int last_xValueScaled = 0;
+  static int last_yValueScaled = 0;
+
+  if (printDelay.justFinished() || last_xValueScaled != xValueScaled || last_yValueScaled != yValueScaled)
   {
-    Serial.print("X: ");
+    last_xValueScaled = xValueScaled;
+    last_yValueScaled = yValueScaled;
+  
+  Serial.print("X: ");
   Serial.print(xValue); 
+  Serial.print(" | Scaled X: ");
+  Serial.print(xValueScaled);
   Serial.print(" | Y: ");
-  Serial.println(yValue);
+  Serial.print(yValue);
+  Serial.print(" | Scaled Y: ");
+  Serial.println(yValueScaled);
   
 
-  Serial.print("Left Speed: ");
-  PrintSpeed(leftSpeed);
+  Serial.print("Left Speed: [");
+  Serial.print(leftSpeed);
+  Serial.print("] ");
+  PrintSpeed(speedToPowerFunctionsPwm(leftSpeed));
   //Serial.print( static_cast<int>(leftSpeed)); 
-  Serial.print(" | Right Speed: ");
-  PrintSpeed(rightSpeed);
+  Serial.print(" | Right Speed: [");
+  Serial.print(rightSpeed);
+  Serial.print("] ");
+  PrintSpeed(speedToPowerFunctionsPwm(rightSpeed));
   Serial.println();
   //Serial.println(static_cast<int>(rightSpeed));
 
@@ -154,17 +184,41 @@ void printValues()
     printDelay.start(PRINT_DELAY_MS);
   }
 }
+
+void translateJoystickToSpeed(int& leftSpeed, int& rightSpeed, int x, int y)
+{
+  float x_raw, y_raw, X, Y, V, W;
+  x_raw = static_cast<float>(x);
+  y_raw = static_cast<float>(y);
+
+  //Scale the value (no scaling right now)
+  X = x_raw;
+  Y = y_raw;
+  //get the number
+  V =(100-abs(X)) * (Y/100) + Y;
+  
+  W= (100-abs(Y)) * (X/100) + X;
+  leftSpeed =static_cast<int>((V+W) /2);
+  rightSpeed = static_cast<int>((V-W)/2);
+  
+
+}
+
+
+
 // main loop
 void loop()
 {
 
   xValue = analogRead(analogXPin); // read the input pin
-  yValue = analogRead(analogYPin); // read the input pin  
-  leftSpeed = analogToSpeed(xValue);
-  rightSpeed = analogToSpeed(yValue);
+  yValue = analogRead(analogYPin); // read the input pin 
+  xValueScaled = scaleAnalogValue(xValue);
+  yValueScaled = scaleAnalogValue(yValue);
+  translateJoystickToSpeed(leftSpeed, rightSpeed, xValueScaled, yValueScaled); 
+  
   printValues();
 
-    powerFunctions.combo_pwm(static_cast<PowerFunctionsPwm>(leftSpeed), static_cast<PowerFunctionsPwm>(rightSpeed));
+    powerFunctions.combo_pwm(speedToPowerFunctionsPwm(leftSpeed), speedToPowerFunctionsPwm(rightSpeed));
 delay(100);
   
 
