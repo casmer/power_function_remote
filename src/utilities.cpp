@@ -51,13 +51,16 @@ static int speed_lookup[] = {
   return speed_lookup[speed];
 }
 
-int rampFunction(int inputvValue)
+int rampFunction(int intputValue)
 {
-  bool isNegative = inputvValue < 0;
-  int inputValue = abs(inputvValue);
-  int scaledValue =(inputValue*5/4 - 25); 
-  if (scaledValue > 0)
-    return  scaledValue * (isNegative ? -1 : 1);
+  bool isNegative = intputValue < 0;
+  double x =static_cast<double>(abs(intputValue));
+
+double y = 0.0117 * (x*x) - 0.1775 * x + 0;
+
+  //int y =(inputValue*5/4 - 25); 
+  if (y > 10)
+    return static_cast<int>(y * (isNegative ? -1 : 1));
   else 
     return 0;
 }
@@ -65,13 +68,10 @@ int rampFunction(int inputvValue)
 int scaleAnalogValue(int analogValue)
 {
   // deadzone
-  if (analogValue > 490 && analogValue < 530)
-  {
-    return 0;
-  }
-  int speed = map(analogValue, 0, 1023, -100, 100);
-  
-  return speed;
+ 
+  int scaled = map(analogValue, 0, 1065, -100, 100);
+ 
+  return scaled;
 }
 
 

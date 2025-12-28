@@ -23,6 +23,10 @@ int yValue = 0;      // Variable to store the read value
 int xValueScaled = 0; // Variable to store the scaled read value
 int yValueScaled = 0; // Variable to store the scaled read value
 
+int xValueRamped = 0; // Variable to store the ramped x value
+int yValueRamped = 0; // Variable to store the ramped y value
+
+
 int leftSpeed = 50;  // initial speed
 int rightSpeed = 50; // initial speed
 
@@ -118,7 +122,10 @@ void printValues()
     Serial.print(xValue);
     Serial.print(" | Scaled X: ");
     Serial.print(xValueScaled);
-    Serial.print(" | Y");
+    
+    Serial.print(" | Ramped X: ");
+    Serial.println(xValueRamped);
+    Serial.print("Y");
     if (invertJoystickY)
     {
       Serial.print("(inverted): ");
@@ -129,17 +136,20 @@ void printValues()
     }
     Serial.print(yValue);
     Serial.print(" | Scaled Y: ");
-    Serial.println(yValueScaled);
+    Serial.print(yValueScaled);
+
+    Serial.print(" | Ramped Y: ");
+    Serial.println(yValueRamped);
 
     Serial.print("Left Speed: [");
     Serial.print(leftSpeed);
     Serial.print("] ");
-    PrintSpeed(speedToPowerFunctionsPwm(leftSpeed));
+    PrintSpeed(static_cast<int>(powerFunctions.speedToPwm(leftSpeed)));
     // Serial.print( static_cast<int>(leftSpeed));
     Serial.print(" | Right Speed: [");
     Serial.print(rightSpeed);
     Serial.print("] ");
-    PrintSpeed(speedToPowerFunctionsPwm(rightSpeed));
+    PrintSpeed(static_cast<int>(powerFunctions.speedToPwm(rightSpeed)));
     Serial.println();
     // Serial.println(static_cast<int>(rightSpeed));
   }
@@ -149,31 +159,65 @@ void printValues()
   }
 }
 
+void getJoystickValues()
+{
+
+ //static  int xValue, yValue = 0; // previous states or each joystick input, default to zero
+constexpr int minChange = 5; // minimum amount of change that must be seen to determine that the stick has moved
+constexpr int numSamples = 20; // how many samples to take when reading the joystick
+
+ int x = 0, y = 0, z = 0, sum_x = 0, sum_y = 0; // start with all values at zero 
+
+  // collect the required number of samples and add to a sum
+  for(int i = 0; i<=numSamples; i++)
+  {
+    sum_x += analogRead(analogXPin);
+    sum_y += analogRead(analogYPin);
+  }
+
+  // find the mean average of the samples
+  x = sum_x / numSamples;
+  y = sum_y / numSamples;
+
+  // if the average of either axis is greater than the minimum required change, or the button state has changed, display the values
+  if (abs(x - xValue) > minChange || abs(y - yValue) > minChange)
+  { 
+    //Serial.printf("Stick: %d,%d Δ: %d,%d / btn:%d \n", x, x, abs(x-xValue), abs(y-yValue), z);
+
+    // save the current values as the new 'previous' value to compare on th next loop
+    xValue = x;
+    yValue = y;
+    
+  }
+}
+
 // main loop
 void loop()
 {
-
-  invertJoystickX = digitalRead(invertJoystickXPin) == LOW;
-  invertJoystickY = digitalRead(invertJoystickYPin) == LOW;
-  xValue = analogRead(analogXPin); // read the input pin
-  if (invertJoystickX)
-  {
-    xValue = 1023 - xValue;
-  }
-  yValue = analogRead(analogYPin); // read the input pin
-  if (invertJoystickY)
-  {
-    yValue = 1023 - yValue;
-  }
-  xValueScaled = rampFunction(scaleAnalogValue(xValue));
-  yValueScaled = rampFunction(scaleAnalogValue(yValue));
-  translateJoystickToSpeed(leftSpeed, rightSpeed, xValueScaled, yValueScaled);
+getJoystickValues();
+  invertJoystickX = false; //digitalRead(invertJoystickXPin) == LOW;
+  invertJoystickY = false; //digitalRead(invertJoystickYPin) == LOW;
+  // xValue = analogRead(analogXPin); // read the input pin
+  // if (invertJoystickX)
+  // {
+  //   xValue = 1023 - xValue;
+  // }
+  // yValue = analogRead(analogYPin); // read the input pin
+  // if (invertJoystickY)
+  // {
+  //   yValue = 1023 - yValue;
+  // }
+  xValueScaled = scaleAnalogValue(xValue);
+  yValueScaled = scaleAnalogValue(yValue);
+  xValueRamped = rampFunction(xValueScaled);
+  yValueRamped = rampFunction(yValueScaled);
+  translateJoystickToSpeed(leftSpeed, rightSpeed, xValueRamped, yValueRamped);
  leftSpeed = -leftSpeed; // Invert left motor
   printValues();
 
   powerFunctions.combo_pwm(
-      static_cast<PowerFunctionsPwm>(speedToPowerFunctionsPwm(leftSpeed)),
-      static_cast<PowerFunctionsPwm>(speedToPowerFunctionsPwm(rightSpeed)));
+      static_cast<PowerFunctionsPwm>(powerFunctions.speedToPwm(leftSpeed)),
+      static_cast<PowerFunctionsPwm>(powerFunctions.speedToPwm(rightSpeed)));
   delay(30);
 
 } // End of loop
