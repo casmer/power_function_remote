@@ -51,6 +51,16 @@ static int speed_lookup[] = {
   return speed_lookup[speed];
 }
 
+int rampFunction(int inputvValue)
+{
+  bool isNegative = inputvValue < 0;
+  int inputValue = abs(inputvValue);
+  int scaledValue =(inputValue*5/4 - 25); 
+  if (scaledValue > 0)
+    return  scaledValue * (isNegative ? -1 : 1);
+  else 
+    return 0;
+}
 
 int scaleAnalogValue(int analogValue)
 {

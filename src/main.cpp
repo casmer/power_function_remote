@@ -27,7 +27,7 @@ int leftSpeed = 50;  // initial speed
 int rightSpeed = 50; // initial speed
 
 // create a power functions instance
-PowerFunctions powerFunctions(12, 0); // Pin 12, Channel 0
+PowerFunctions powerFunctions(12, 3); // Pin 12, Channel 3
 
 void setup()
 {
@@ -165,15 +165,15 @@ void loop()
   {
     yValue = 1023 - yValue;
   }
-  xValueScaled = scaleAnalogValue(xValue);
-  yValueScaled = scaleAnalogValue(yValue);
+  xValueScaled = rampFunction(scaleAnalogValue(xValue));
+  yValueScaled = rampFunction(scaleAnalogValue(yValue));
   translateJoystickToSpeed(leftSpeed, rightSpeed, xValueScaled, yValueScaled);
-
+ leftSpeed = -leftSpeed; // Invert left motor
   printValues();
 
   powerFunctions.combo_pwm(
       static_cast<PowerFunctionsPwm>(speedToPowerFunctionsPwm(leftSpeed)),
       static_cast<PowerFunctionsPwm>(speedToPowerFunctionsPwm(rightSpeed)));
-  delay(100);
+  delay(30);
 
 } // End of loop

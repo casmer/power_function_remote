@@ -5,6 +5,9 @@
 /// @return 
 int speedToPowerFunctionsPwm(int analogValue);
 
+int rampFunction(int inputValue);
+
+
 int scaleAnalogValue(int analogValue);
 
 void translateJoystickToSpeed(int& leftSpeed, int& rightSpeed, int x, int y);
