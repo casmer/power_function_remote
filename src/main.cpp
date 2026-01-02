@@ -25,8 +25,9 @@
 Lpf2HubEmulation myEmulatedHub("TrainHub", HubType::POWERED_UP_HUB);
 
 // create a power functions instance (IR LED on Pin 12, IR Channel 0)
-PowerFunctions pf(12, 0);
-
+PowerFunctions pf(12, 3);
+volatile int red_speed=0;
+volatile int blue_speed=0;
 
 void writeValueCallback(byte port, byte value)
 {
@@ -36,18 +37,21 @@ void writeValueCallback(byte port, byte value)
 
   if (port == 0x00)
   {
-    pf.single_pwm(PowerFunctionsPort::RED, pf.speedToPwm(value));    
+    pf.single_pwm(PowerFunctionsPort::RED, pf.speedToPwm(value)); 
+    red_speed = value;   
+    
   }
 
   if (port == 0x01)
   {
     pf.single_pwm(PowerFunctionsPort::BLUE, pf.speedToPwm(value));
+    blue_speed=value;
   }
 
   if (port == 0x32)
   {
     Serial.print("Hub LED command received with color: ");
-    Serial.println(LegoinoCommon::ColorStringFromColor(value).c_str());
+  //  Serial.println(LegoinoCommon::ColorStringFromColor(value).c_str());
   }
 }
 
@@ -75,6 +79,14 @@ void loop()
     delay(1000);
     myEmulatedHub.attachDevice((byte)PoweredUpHubPort::B, DeviceType::TRAIN_MOTOR);
     delay(1000);
+  } else
+  {
+    delay(500);
+    
+    Serial.print("Red command received : ");
+    Serial.println(red_speed);
+    Serial.print("Blue command received : ");
+    Serial.println(blue_speed);
   }
 
 } // End of loop
